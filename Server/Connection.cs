@@ -13,8 +13,10 @@ namespace Server
 
         private TcpClient client;
         private MainServer server;
-        private ISerializer serializer;
         private Client clientModel;
+
+        private ISerializer serializer;
+        private IDeserializer deserializer;
 
         public string Id => clientModel.Id;
         public Circle Circle => clientModel.Circle;
@@ -27,7 +29,9 @@ namespace Server
 
             string id = Guid.NewGuid().ToString();
             clientModel = new Client(id, new Circle());
+
             serializer = new Serializer();
+            deserializer = new Deserializer();
         }
 
         public void Process()
@@ -36,17 +40,18 @@ namespace Server
             {
                 Stream = client.GetStream();
 
-                SendState();
+                string state = GetState();
+                SendState(state);
                 
                 while (true)
                 {
-                    string message = GetMessage();
-
                     try
                     {
+                        string activityString = GetMessage();
+                        Activity activity = deserializer.Deserialize<Activity>(activityString);
+                        clientModel.Move(activity);
 
-
-                        //server.CheckIntersection();
+                        server.SendAll(GetState());                        
                     }
                     catch (Exception e)
                     {
@@ -66,11 +71,15 @@ namespace Server
             }
         }
 
-        private void SendState()
+        private string GetState()
         {
-            string json = serializer.SerializeConnection(this);
+            return serializer.Serialize(clientModel);
+        }
 
-            byte[] data = Encoding.UTF8.GetBytes(json);
+        private void SendState(string state)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(state);
+
             Stream.Write(data, 0, data.Length);
         }
 

@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Net.Sockets;
 using System.Text;
+using Infrastructure.Utilities;
+using Infrastructure.Models;
 
 namespace Client
 {
@@ -15,17 +17,17 @@ namespace Client
 
         static void Main(string[] args)
         {
-           
+
             client = new TcpClient();
             try
             {
                 client.Connect(host, port);
-                stream = client.GetStream();
+                stream = client.GetStream();
 
                 Thread receiveThread = new Thread(new ThreadStart(ReceiveMessage));
                 receiveThread.Start();
-                
-                SendMessage();
+
+                Process();
             }
             catch (Exception ex)
             {
@@ -35,16 +37,48 @@ namespace Client
             {
                 Disconnect();
             }
+
+            //ISerializer serializer = new Serializer();
+            //IDeserializer deserializer = new Deserializer();
+
+            //Activity activity = new Activity();
+            //activity.Type = Activity.Types.Left;
+
+            //string str = serializer.Serialize(activity);
+            //Console.WriteLine(str);
+            //Activity activity1 = deserializer.Deserialize<Activity>(str);
+            //Console.WriteLine(activity1);
+
         }
         
-        static void SendMessage()
+        static void Process()
         {
-            Console.WriteLine("Введите сообщение: ");
-
             while (true)
             {
-                string message = Console.ReadLine();
-                byte[] data = Encoding.Unicode.GetBytes(message);
+                var ch = Console.ReadKey(false).Key;
+                Activity activity = new Activity();
+                switch (ch)
+                {
+                    case ConsoleKey.UpArrow:
+                        activity.Type = Activity.Types.Up;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        activity.Type = Activity.Types.Down;
+                        break;
+                    case ConsoleKey.RightArrow:
+                        activity.Type = Activity.Types.Right;
+                        break;
+                    case ConsoleKey.LeftArrow:
+                        activity.Type = Activity.Types.Left;
+                        break;
+
+                    default:
+                        continue;
+                }
+                ISerializer serializer = new Serializer();
+                string str = serializer.Serialize(activity);
+
+                byte[] data = Encoding.UTF8.GetBytes(str);
                 stream.Write(data, 0, data.Length);
             }
         }
@@ -61,7 +95,7 @@ namespace Client
                     do
                     {
                         bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                        builder.Append(Encoding.UTF8.GetString(data, 0, bytes));
                     }
                     while (stream.DataAvailable);
 
@@ -70,7 +104,7 @@ namespace Client
                 }
                 catch
                 {
-                    Console.WriteLine("Подключение прервано!"); 
+                    Console.WriteLine("Connection refused!"); 
                     Console.ReadLine();
                     Disconnect();
                 }

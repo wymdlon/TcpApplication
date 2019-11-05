@@ -33,6 +33,11 @@ namespace Server
             }
         }
 
+        public void SendAll(string message)
+        {
+            BroadcastMessage(message, "");
+        }
+
         public void BroadcastMessage(string message, string id)
         {
             byte[] data = Encoding.UTF8.GetBytes(message);
