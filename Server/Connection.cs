@@ -1,5 +1,5 @@
-﻿using Server.Models;
-using Server.Utilities;
+﻿using Infrastructure.Models;
+using Infrastructure.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -8,24 +8,25 @@ using System.Text;
 namespace Server
 {
     public class Connection
-    {
-        internal string Id { get; private set; }
+    {        
         internal NetworkStream Stream { get; private set; }
 
-        //private string userName;
         private TcpClient client;
         private MainServer server;
         private ISerializer serializer;
-        public Circle Circle { get; private set; }
+        private Client clientModel;
+
+        public string Id => clientModel.Id;
+        public Circle Circle => clientModel.Circle;
 
         public Connection(TcpClient tcpClient, MainServer mainServer)
         {
-            Id = Guid.NewGuid().ToString();
             client = tcpClient;
             server = mainServer;
             server.AddConnection(this);
-            
-            Circle = new Circle();
+
+            string id = Guid.NewGuid().ToString();
+            clientModel = new Client(id, new Circle());
             serializer = new Serializer();
         }
 

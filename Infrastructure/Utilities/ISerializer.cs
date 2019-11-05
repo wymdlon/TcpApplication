@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Server.Utilities
+namespace Infrastructure.Utilities
 {
     public interface ISerializer
     {
-        string SerializeConnection(Connection connection);
+        string Serialize<T>(T item);
     }
 }

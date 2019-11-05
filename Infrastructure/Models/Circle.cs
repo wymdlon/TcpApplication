@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Server.Models
+namespace Infrastructure.Models
 {
     public class Circle
     {
         public int Radius { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
-
-
 
         public Circle()
         {
