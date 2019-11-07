@@ -24,18 +24,23 @@ namespace WpfClient
         private const string host = "127.0.0.1";
         private const int port = 8080;
 
-
         private Ellipse myEllipse;
         private TcpClient tcpClient;
         private NetworkStream stream;
         private Dictionary<string, Client> players;
 
+        private ISerializer serializer;
+        private IDeserializer deserializer;
+
+        private delegate void UpdatePositionDelegate(Client client);
 
         public MainWindow()
         {
             InitializeComponent();
             tcpClient = new TcpClient();
             players = new Dictionary<string, Client>();
+            serializer = new Serializer();
+            deserializer = new Deserializer();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -75,15 +80,27 @@ namespace WpfClient
                     while (stream.DataAvailable);
 
                     string message = builder.ToString();
-                    Console.WriteLine(message);
+
+                    Client client = deserializer.Deserialize<Client>(message);
+
+                    Canvas.Dispatcher.Invoke(new UpdatePositionDelegate(UpdatePosition), client);
+
+
                 }
-                catch
+                catch (Exception e)
                 {
                     Console.WriteLine("Connection refused!");
                     Console.ReadLine();
                     Disconnect();
                 }
             }
+        }
+
+        private void UpdatePosition(Client client)
+        {
+
+            Canvas.SetLeft(myEllipse, client.Circle.X);
+            Canvas.SetBottom(myEllipse, client.Circle.Y);
         }
 
         private void Disconnect()
@@ -125,8 +142,8 @@ namespace WpfClient
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            var left = Canvas.GetLeft(myEllipse);
-            var bottom = Canvas.GetBottom(myEllipse);
+            //Canvas.SetLeft(myEllipse, ++left);
+            //Canvas.SetBottom(myEllipse, client.Circle.Y);
 
 
             Activity activity = new Activity();
@@ -149,7 +166,7 @@ namespace WpfClient
                     return;
             }
 
-            ISerializer serializer = new Serializer();
+            serializer = new Serializer();
             string str = serializer.Serialize(activity);
 
             byte[] data = Encoding.UTF8.GetBytes(str);
